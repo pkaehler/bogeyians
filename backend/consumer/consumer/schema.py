@@ -18,9 +18,18 @@ class Team(BaseModel):
         orm_mode = True
 
 
-class Leagues(BaseModel):
+class League(BaseModel):
     name: str
     type: LeagueType
 
     class Config:
         orm_mode = True
+
+
+class Country(BaseModel):
+    name: str
+    code: str
+
+
+class Season(BaseModel):
+    year: int

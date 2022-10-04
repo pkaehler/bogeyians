@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-Base  = declarative_base()
+Base = declarative_base()
 
 
 class Team(Base):
@@ -19,10 +19,10 @@ class League(Base):
     __tablename__ = 'leagues'
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    type = Column(Integer) # Enum: "league" "cup"
+    type = Column(String)  # Enum
 
 
-class Countries(Base):
+class Country(Base):
     __tablename__ = 'countries'
     id = Column(Integer, primary_key=True)
     name = Column(String)
