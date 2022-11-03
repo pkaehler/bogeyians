@@ -100,5 +100,6 @@ def filter_seasons_per_leagues(ctx, ids: list())->dict:
     else:
         return prepared
 
+
 if __name__ == '__main__':
     cli()

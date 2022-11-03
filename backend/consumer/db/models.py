@@ -25,7 +25,3 @@ class League(ormar.Model):
     type: str = ormar.String(max_length=50,choices=list(LeagueEnum))
     country_name: str = ormar.String(max_length=50)
     country_code: str = ormar.String(max_length=3)
-
-engine = sqlalchemy.create_engine(DATABASE_URL)
-metadata.drop_all(engine)
-metadata.create_all(engine)
