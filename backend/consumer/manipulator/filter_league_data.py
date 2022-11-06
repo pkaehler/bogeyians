@@ -1,4 +1,4 @@
-from util.common import check_file_exists_in, open_json
+from util.common import check_file_is_outdated, open_json
 
 # todo:
 # define schema to keep only this information

@@ -1,13 +1,30 @@
 import json
 import os
 import logging
+import re
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def check_file_exists_in(file_path: str) -> bool:
-    return os.path.exists(file_path)
+def get_timestamp_from_filename(file_path: str):
+    match = re.search(r"(\d+)", file_path)
+    ts = datetime.strptime(match.group(1), '%Y%m%d%H%M')
+    return ts
+
+
+def check_file_is_outdated(file_path: str, delay_in_sec: int) -> bool:
+    is_available = os.path.exists(file_path)
+    if not is_available:
+        logger.info(f"file is not available in {file_path}")
+        return True
+    else:
+        most_recent_version = get_timestamp_from_filename(file_path)
+        if (datetime.now() - most_recent_version).total_seconds() < delay_in_sec:
+            return False
+        else:
+            return True
 
 
 def save_json(file_path: str, file) -> bool:

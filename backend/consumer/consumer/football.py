@@ -1,15 +1,17 @@
 import os
 import json
+from datetime import datetime
 
 import click as click
 import requests
 import logging
 
-from util.common import check_file_exists_in, save_json, open_json
+from util.common import check_file_is_outdated, save_json, open_json
 from manipulator.filter_league_data import filter_dict, clean_seasons
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 def download_data(url, headers, payload):
     logger.info(f'send request to {url}')
@@ -17,31 +19,28 @@ def download_data(url, headers, payload):
     raw_data = json.loads(response.text)
     return raw_data
 
-def teams_per_season_endpoint() -> str:
-    """
-    returns query params
-    """
-    #https://v3.football.api-sports.io/teams?league=78&season=2021
-    return "?league=78&season=2021"
 
 mapper = {
     "": "",
-    "teams_per_season": "teams" + teams_per_season_endpoint(),
+    "all_teams": "teams",
     "all_leagues": "leagues",
+    "all_venues": "venues",
 }
 
 
 def _get_data_from(endpoint: str, headers: dict, payload: dict):
+    deprecated = 24*60*60
     endpoint = f"{endpoint}"
     url = f"https://v3.football.api-sports.io/{mapper[endpoint]}"
-    storage_path = f"data/raw_{endpoint}.json"
-    logger.info('Try to fetch data from {}')
-    if check_file_exists_in(storage_path):
-        logger.info(f'Stopped. File {storage_path} already exists.')
-    else:
+    ts_version = datetime.now().strftime('%Y%m%d%H%M')
+    storage_path = f"data/raw_{endpoint}_{ts_version}.json"
+    logger.info(f'Try to fetch data from {url}')
+    if check_file_is_outdated(storage_path, 24*60*60):
         data = download_data(url=url, headers=headers, payload=payload)
         if save_json(file_path=storage_path, file=data):
             logger.info(f'File saved to {storage_path}')
+    else:
+        logger.info(f'File {storage_path} already exists and was updated less than {deprecated} seconds.')
 
 
 @click.group("cli")
@@ -54,8 +53,8 @@ def cli(ctx):
 @cli.command("get-data")
 @click.pass_context
 @click.option("--endpoint", help="endpoint to query (leagues,...)", type=str)
-def get_data(ctx,endpoint: str):
-    endpoints = ('all_leagues', 'teams_per_season')
+def get_data(ctx, endpoint: str):
+    endpoints = [k for k, v in mapper.items()]
     apikey = os.environ.get('FOOTBALL_COM_API')
     payload = {}
     headers = {
@@ -66,39 +65,6 @@ def get_data(ctx,endpoint: str):
         _get_data_from(endpoint=endpoint, headers=headers, payload=payload)
     else:
         logger.info(f'Not implemented yet: "{endpoint}". Choose one of the following: {endpoints}')
-
-
-@cli.command("filter-seasons-per-leagues")
-@click.pass_context
-@click.option("--ids", help="clean list of season(years) for a leagues or all leagues", required=False)
-def filter_seasons_per_leagues(ctx, ids: list())->dict:
-    """
-    praram: ids list of int
-    return: list of dicts eg
-        [
-            {'id': 4, 'name': 'Euro Championship', 'seasons': [2008, 2012, 2016, 2020]},
-            {'id': 21, 'name': 'Confederations Cup', 'seasons': [2009, 2013, 2017]},
-            {'id': 61, 'name': 'Ligue 1', 'seasons': [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021]}
-        ]
-    """
-    endpoint = 'all_leagues'
-    storage_path = f"data/raw_{endpoint}.json"
-    filtered = filter_dict(open_json(storage_path)["response"], ('league', 'seasons'))
-    prepared = []
-
-    for item in filtered:
-        out = {}
-        for k, v in item.items():
-            if k == 'league':
-                out['id'] = item[k]['id']
-                out['name'] = item[k]['name']
-            if k == 'seasons':
-                out['seasons'] = clean_seasons(v)
-        prepared.append(out)
-    if ids:
-        return {k: v for k,v in prepared.items() if k in ids}
-    else:
-        return prepared
 
 
 if __name__ == '__main__':

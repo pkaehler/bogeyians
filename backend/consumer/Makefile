@@ -1,18 +1,14 @@
-.PHONY: get-league-data
-get-league-data:
+.PHONY: get-leagues-raw-data
+get-leagues-raw-data:
 	poetry run python consumer/football.py get-data --endpoint=all_leagues
 
-.PHONY: get-teams-per-season-data
-get-teams-per-season-data:
-	poetry run python consumer/football.py get-data --endpoint=teams_per_season
+.PHONY: get-teams-raw-data
+get-teams-raw-data:
+	poetry run python consumer/football.py get-data --endpoint=all_teams
 
-.PHONY: filter-seasons-for-all-leagues
-filter-seasons-for-all-leagues:
-	poetry run python consumer/football.py filter-seasons-per-leagues
-
-.PHONY: filter-seasons-for-leagues
-filter-seasons-for-leagues:
-	poetry run python consumer/football.py filter-seasons-per-leagues --ids=${IDS}
+.PHONY: get-venues-raw-data
+get-venues-raw-data:
+	poetry run python consumer/football.py get-data --endpoint=all_venues
 
 .PHONY: test-consumer
 test-consumer:
